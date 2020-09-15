@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.fleetmanager.MainActivity;
 import com.example.fleetmanager.R;
+import com.example.fleetmanager.loadout.LoadoutManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
@@ -71,6 +72,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 Bitmap resized = Bitmap.createScaledBitmap(b,3840,2160,false);
                 ((ImageView)layout.findViewById(R.id.thumb)).setImageDrawable(new BitmapDrawable(getContext().getResources(),resized));
                 ((FloatingActionButton)layout.findViewById(R.id.removeBtn)).setOnClickListener(this);
+
+                //setup loadout manager
+                new LoadoutManager(c.getString(0),layout);
                 //ADD CARD TO CONTAINER
                 card_container.addView(layout);
             } while(c.moveToNext());

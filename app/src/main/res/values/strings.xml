@@ -12,4 +12,5 @@
 
     <string name="shipName_LBL">Name : </string>
     <string name="shipMake_LBL">Mannufacturer : </string>
+    <string name="shipLoadout_LBL">Loadout</string>
 </resources>
