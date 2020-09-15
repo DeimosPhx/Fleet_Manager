@@ -159,46 +159,46 @@ public class GalleryFragment extends Fragment implements View.OnClickListener{
     }
 
 
+    @Override
+    public void onClick(View view){
+        View parent = (View) view.getParent();
+        //add ship to DB for hangar cards
+       ((MainActivity)getActivity()).getFleetDB().execSQL("INSERT INTO ships (Name,Make,ImgURL) VALUES" +
+               " ('"+((TextView)parent.findViewById(R.id.ShipName)).getText()+"','"+((TextView)parent.findViewById(R.id.ShipMake)).getText()+"','"+((TextView) parent.findViewById(R.id.ThumbnailURL)).getText()+"');");
 
-    private class ThumbnailRetreiver extends AsyncTask<String,Void,Drawable>{
-        private Exception exception;
-        private ImageView thumbnail_container;
-
-        public ThumbnailRetreiver(ImageView thumbnail_container){
-            super();
-            this.thumbnail_container = thumbnail_container;
-        }
-
-        protected Drawable doInBackground(String... urls){
-            try {
-                InputStream is = (InputStream) new URL(urls[0]).getContent();
-                Drawable img = Drawable.createFromStream(is,null);
-                is.close();
-                return img;
-            }catch (Exception e){
-                this.exception = e;
-                return null;
-            }finally {
-            }
-        }
-
-        protected void onPostExecute(Drawable img){
-            if (this.exception != null)
-                exception.printStackTrace();
-            if(this.thumbnail_container != null){
-                Bitmap b = ((BitmapDrawable)img).getBitmap();
-                Bitmap resized = Bitmap.createScaledBitmap(b,3840,2160,false);
-                this.thumbnail_container.setImageDrawable(new BitmapDrawable(getContext().getResources(),resized));
-            }
+       //add default loadout for added ship
+        //start by getting last entry on ship db to get the ship's ID
+        Cursor c = ((MainActivity)getActivity()).getFleetDB().rawQuery("SELECT MAX(id) FROM ships ", null);
+        c.moveToFirst();
+        String id = c.getString(0);
+        //parse JSON
+        HashMap<String,String> defaultLoadout = getDefaultLoadoutFromJSON();
+        if(defaultLoadout.get("ERROR") != null) {
+            //insert loadout to DB linked by ship's ID
+            ((MainActivity) getActivity()).getFleetDB().execSQL("INSERT INTO loadout (id,weapons,turrets,missiles,shields,quantumDrive,powerPlant,coolers,thrusters,emps,utilities)" +
+                    "VALUES ('" + id + "','" + defaultLoadout.get("weapons") + "','" + defaultLoadout.get("turrets") + "','" + defaultLoadout.get("missiles") + "','" + defaultLoadout.get("shields") +
+                    "','" + defaultLoadout.get("quantumDrive") + "','" + defaultLoadout.get("powerPlant") + "','" + defaultLoadout.get("coolers") + "','" + defaultLoadout.get("thrusters") + "','" +
+                    defaultLoadout.get("emps") + "','" + defaultLoadout.get("utilities") + "');");
         }
     }
 
-    @Override
-    public void onClick(View view)
-    {
-        View parent = (View) view.getParent();
 
-       ((MainActivity)getActivity()).getFleetDB().execSQL("INSERT INTO ships (Name,Make,ImgURL) VALUES" +
-               " ('"+((TextView)parent.findViewById(R.id.ShipName)).getText()+"','"+((TextView)parent.findViewById(R.id.ShipMake)).getText()+"','"+((TextView) parent.findViewById(R.id.ThumbnailURL)).getText()+"');");
+    private HashMap<String,String> getDefaultLoadoutFromJSON(){
+        //TODO alter to return proper data for default loadout
+        try {
+            JSONObject obj = new JSONObject(loadJSONFromAsset());
+            JSONArray m_jArry = obj.getJSONArray("data");
+            ArrayList<HashMap<String, String>> formList = new ArrayList<HashMap<String, String>>();
+            HashMap<String, String> m_li;
+
+            for (int i = 0; i < m_jArry.length(); i++) {
+                JSONObject shipJSON = m_jArry.getJSONObject(i);
+            }
+        }catch (JSONException ex){
+            HashMap<String,String> errorMap = new HashMap<>();
+            errorMap.put("ERROR",ex.getMessage());
+            return errorMap;
+        }
+        return null;
     }
 }

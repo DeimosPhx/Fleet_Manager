@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         //Creating or opening fleet DB
         FleetDB = openOrCreateDatabase("Fleet",MODE_PRIVATE,null);
         FleetDB.execSQL("CREATE TABLE IF NOT EXISTS ships(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,Name VARCHAR,Make VARCHAR,ImgURL VARCHAR);");
+        FleetDB.execSQL("CREATE TABLE IF NOT EXISTS loadout(id INTEGER PRIMARY KEY NOT NULL,weapons VARCHAR,turrets VARCHAR,missiles VARCHAR,shields VARCHAR,quantumDrive VARCHAR,powerPlant VARCHAR,coolers VARCHAR,thrusters VARCHAR,emps VARCHAR,utilities VARCHAR);");
 
     }
 
