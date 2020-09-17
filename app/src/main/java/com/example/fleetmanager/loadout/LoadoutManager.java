@@ -41,7 +41,8 @@ public class LoadoutManager implements View.OnClickListener{
     public void onClick(View v) {
         View hangar = (View)v.getParent().getParent().getParent().getParent().getParent();
         View container = hangar.findViewById(R.id.item_cards_container);
-        //View container = ((View)v.getParent().getParent().getParent()).findViewById(R.id.item_cards_container);
+        //Clean layoud container
+        ((LinearLayout) container).removeAllViewsInLayout();
         //Setup all fields
         Cursor c = ((MainActivity) activity).getFleetDB().rawQuery("SELECT DISTINCT weapons,turrets,missiles,shields,quantumDrive,powerPlant,coolers,thrusters,emps,utilities  FROM loadout WHERE id='"+this.shipId+"';", null);
         if (c.moveToFirst()){
