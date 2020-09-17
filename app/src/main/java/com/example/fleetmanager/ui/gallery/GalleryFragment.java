@@ -30,6 +30,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.fleetmanager.MainActivity;
 import com.example.fleetmanager.R;
+import com.example.fleetmanager.loadout.LoadoutComponents;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
@@ -43,7 +44,9 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 
 public class GalleryFragment extends Fragment implements View.OnClickListener{
 
@@ -172,33 +175,85 @@ public class GalleryFragment extends Fragment implements View.OnClickListener{
         c.moveToFirst();
         String id = c.getString(0);
         //parse JSON
-        HashMap<String,String> defaultLoadout = getDefaultLoadoutFromJSON();
-        if(defaultLoadout.get("ERROR") != null) {
+        HashMap<String,String> defaultLoadout = getDefaultLoadoutFromJSON(((TextView)parent.findViewById(R.id.ShipName)).getText().toString());
+        if(defaultLoadout.get("ERROR") == null) {
             //insert loadout to DB linked by ship's ID
+            String[] comps = Arrays.toString(LoadoutComponents.values()).replaceAll("^.|.$", "").split(", ");
+            HashMap<String,String> compiled = new HashMap<>();
+            //handle multiple componenet for class [EXAMPLE : having 2 weapons]
+            for(String comp : comps){
+                String complingComp = "";
+                int cpt = 0;
+                while(defaultLoadout.containsKey(comp+"_"+cpt)){
+                    if(cpt!=0)
+                        complingComp += ";";
+                    complingComp += defaultLoadout.get(comp+"_"+cpt);
+                    cpt++;
+                }
+                compiled.put(comp,complingComp);
+            }
             ((MainActivity) getActivity()).getFleetDB().execSQL("INSERT INTO loadout (id,weapons,turrets,missiles,shields,quantumDrive,powerPlant,coolers,thrusters,emps,utilities)" +
-                    "VALUES ('" + id + "','" + defaultLoadout.get("weapons") + "','" + defaultLoadout.get("turrets") + "','" + defaultLoadout.get("missiles") + "','" + defaultLoadout.get("shields") +
-                    "','" + defaultLoadout.get("quantumDrive") + "','" + defaultLoadout.get("powerPlant") + "','" + defaultLoadout.get("coolers") + "','" + defaultLoadout.get("thrusters") + "','" +
-                    defaultLoadout.get("emps") + "','" + defaultLoadout.get("utilities") + "');");
+                    "VALUES ('" + id + "','" + compiled.get(LoadoutComponents.weapons.toString()) + "','" + compiled.get(LoadoutComponents.turrets.toString()) + "','" + compiled.get(LoadoutComponents.missiles.toString()) + "','" + compiled.get(LoadoutComponents.shield_generators.toString()) +
+                    "','" + compiled.get(LoadoutComponents.quantum_drives.toString()) + "','" + compiled.get(LoadoutComponents.power_plants.toString()) + "','" + compiled.get(LoadoutComponents.coolers.toString()) + "','','" +
+                    compiled.get(LoadoutComponents.emps.toString())+ "','" + compiled.get(LoadoutComponents.utility_items.toString()) + "');");
         }
     }
 
 
-    private HashMap<String,String> getDefaultLoadoutFromJSON(){
-        //TODO alter to return proper data for default loadout
+    private HashMap<String,String> getDefaultLoadoutFromJSON(String shipName){
         try {
+            HashMap<String,String> ReturnMap = new HashMap<>();
             JSONObject obj = new JSONObject(loadJSONFromAsset());
+            String[] comps = Arrays.toString(LoadoutComponents.values()).replaceAll("^.|.$", "").split(", ");
             JSONArray m_jArry = obj.getJSONArray("data");
             ArrayList<HashMap<String, String>> formList = new ArrayList<HashMap<String, String>>();
             HashMap<String, String> m_li;
-
             for (int i = 0; i < m_jArry.length(); i++) {
                 JSONObject shipJSON = m_jArry.getJSONObject(i);
+                if(shipJSON.getString("name").equals(shipName)){
+                    //found ship get default loadout
+                    JSONObject loadout = shipJSON.getJSONObject("compiled");
+                    JSONObject RSIAvionic = loadout.getJSONObject("RSIAvionic");
+                    JSONObject RSIModular = loadout.getJSONObject("RSIModular");
+                    JSONObject RSIPropulsion = loadout.getJSONObject("RSIPropulsion");
+                    JSONObject RSIThrusters = loadout.getJSONObject("RSIThruster");
+                    JSONObject RSIWeapon = loadout.getJSONObject("RSIWeapon");
+                    for(String comp : comps){
+                        if(RSIAvionic.has(comp)){
+                            JSONArray array = RSIAvionic.getJSONArray(comp);
+                            for(int j=0;j<array.length();j++)
+                                ReturnMap.put(comp+"_"+j,array.getJSONObject(j).getString("name"));
+                        }
+                        else if(RSIModular.has(comp)){
+                            JSONArray array = RSIModular.getJSONArray(comp);
+                            for(int j=0;j<array.length();j++)
+                                ReturnMap.put(comp+"_"+j,array.getJSONObject(j).getString("name"));
+                        }
+                        else if(RSIPropulsion.has(comp)){
+                            JSONArray array = RSIPropulsion.getJSONArray(comp);
+                            for(int j=0;j<array.length();j++)
+                                ReturnMap.put(comp+"_"+j,array.getJSONObject(j).getString("name"));
+                        }
+                        else if(RSIThrusters.has(comp)){
+                            JSONArray array = RSIThrusters.getJSONArray(comp);
+                            for(int j=0;j<array.length();j++)
+                                ReturnMap.put(comp+"_"+j,array.getJSONObject(j).getString("name"));
+                        }
+                        else if(RSIWeapon.has(comp)){
+                            JSONArray array = RSIWeapon.getJSONArray(comp);
+                            for(int j=0;j<array.length();j++)
+                                ReturnMap.put(comp+"_"+j,array.getJSONObject(j).getString("name"));
+                        }
+                        else
+                            Log.d("COMPONENENT ERROR -->","COULD'NT FIND "+comp);
+                    }
+                }
             }
+            return ReturnMap;
         }catch (JSONException ex){
             HashMap<String,String> errorMap = new HashMap<>();
             errorMap.put("ERROR",ex.getMessage());
             return errorMap;
         }
-        return null;
     }
 }

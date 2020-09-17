@@ -45,6 +45,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onStart() {
         super.onStart();
+        getView().findViewById(R.id.close_manager).setOnClickListener(this);
         try {
             addShipCardsFromDB();
         } catch (IOException e) {
@@ -74,7 +75,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 ((FloatingActionButton)layout.findViewById(R.id.removeBtn)).setOnClickListener(this);
 
                 //setup loadout manager
-                new LoadoutManager(c.getString(0),layout);
+                new LoadoutManager(c.getString(0),layout,getActivity(),getContext());
                 //ADD CARD TO CONTAINER
                 card_container.addView(layout);
             } while(c.moveToNext());
@@ -89,13 +90,17 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
     @Override
     public void onClick(View v) {
-        View parent = (View)v.getParent();
-        fleetDB.execSQL("DELETE FROM ships WHERE id='"+((TextView)parent.findViewById(R.id.shipId)).getText()+"'");
-        try {
-            removeAllCard();
-            addShipCardsFromDB();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(v.getId() == R.id.close_manager){
+            getView().findViewById(R.id.include).setVisibility(View.INVISIBLE);
+        }else{
+            View parent = (View)v.getParent();
+            fleetDB.execSQL("DELETE FROM ships WHERE id='"+((TextView)parent.findViewById(R.id.shipId)).getText()+"'");
+            try {
+                removeAllCard();
+                addShipCardsFromDB();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
